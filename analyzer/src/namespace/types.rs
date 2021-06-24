@@ -792,12 +792,14 @@ impl SafeNames for Tuple {
             .collect::<Vec<String>>();
         let joined_names = field_names.join("_");
 
+        // The leading `$` is necessary for avoiding name conflict with other user-defined
+        // structs.
         // The trailing `_` denotes the end of the tuple, to differentiate between
         // different tuple nestings. Eg
         // (A, (B, C), D) => tuple_A_tuple_B_C__D_
         // (A, (B, C, D)) => tuple_A_tuple_B_C_D__
         // Conceptually, each paren and comma is replaced with an underscore.
-        format!("tuple_{}_", joined_names)
+        format!("$tuple_{}_", joined_names)
     }
 }
 
