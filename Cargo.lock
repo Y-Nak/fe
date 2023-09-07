@@ -1077,6 +1077,7 @@ dependencies = [
  "fe-hir",
  "fe-macros",
  "itertools",
+ "lazy_static",
  "rustc-hash",
  "salsa-2022",
  "smallvec",
