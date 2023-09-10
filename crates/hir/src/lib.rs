@@ -48,6 +48,10 @@ pub struct Jar(
     hir_def::ImplItemListId,
     hir_def::TypeId,
     hir_def::UsePathId,
+    /// Utility methods for analysis.
+    hir_def::all_structs_in_top_mod,
+    hir_def::all_enums_in_top_mod,
+    hir_def::all_contracts_in_top_mod,
     /// Accumulated diagnostics.
     ParseErrorAccumulator,
     /// Private tracked functions. These are not part of the public API, and
