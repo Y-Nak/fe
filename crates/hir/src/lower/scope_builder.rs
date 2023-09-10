@@ -147,6 +147,8 @@ impl<'db> ScopeGraphBuilder<'db> {
                     inner.into(),
                     inner.generic_params(self.db),
                 );
+                self.graph
+                    .add_edge(item_node, item_node, EdgeKind::self_ty());
                 inner
                     .name(self.db)
                     .to_opt()
@@ -157,6 +159,8 @@ impl<'db> ScopeGraphBuilder<'db> {
             Contract(inner) => {
                 self.graph.add_lex_edge(item_node, parent_node);
                 self.add_field_scope(item_node, inner.into(), inner.fields(self.db));
+                self.graph
+                    .add_edge(item_node, item_node, EdgeKind::self_ty());
                 inner
                     .name(self.db)
                     .to_opt()
@@ -172,6 +176,8 @@ impl<'db> ScopeGraphBuilder<'db> {
                     inner.into(),
                     inner.generic_params(self.db),
                 );
+                self.graph
+                    .add_edge(item_node, item_node, EdgeKind::self_ty());
                 inner
                     .name(self.db)
                     .to_opt()
