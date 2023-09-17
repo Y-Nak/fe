@@ -61,7 +61,36 @@ impl<'db> ImplementorCollector<'db> {
     }
 
     fn collect_impls(&mut self, impls: &[ImplTrait]) {
+        for &impl_ in impls {
+            let Some(implementor) = self.lower_impl(impl_) else {
+                continue;
+            };
+
+            if let Some(conflict_with) = self.does_conflict(implementor) {
+                let diag = TraitLowerDiag::conflict_impl(
+                    implementor.impl_def(self.db),
+                    conflict_with.impl_def(self.db),
+                );
+                self.push_diag(impl_, diag);
+            } else {
+                self.impl_table.insert(self.db, implementor);
+            }
+        }
+    }
+
+    fn lower_impl(&mut self, impl_: ImplTrait) -> Option<Implementor> {
         todo!()
+    }
+
+    fn does_conflict(&mut self, implementor: Implementor) -> Option<Implementor> {
+        let def = implementor.trait_def(self.db);
+        for &already_implemented in self.impl_table.get(def)? {
+            if already_implemented.does_conflict(self.db, implementor) {
+                return Some(already_implemented);
+            }
+        }
+
+        None
     }
 
     fn push_diag(&mut self, impl_: ImplTrait, diag: impl Into<TraitImplDiag>) {
@@ -95,7 +124,7 @@ impl Implementor {
         (implementor, table)
     }
 
-    fn does_conflict(self, db: &dyn HirAnalysisDb, other: &Self) -> bool {
+    fn does_conflict(self, db: &dyn HirAnalysisDb, other: Self) -> bool {
         if self.trait_def(db) != other.trait_def(db) {
             return false;
         }

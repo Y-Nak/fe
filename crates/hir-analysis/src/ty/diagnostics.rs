@@ -3,7 +3,7 @@ use common::diagnostics::{
 };
 use hir::{
     diagnostics::DiagnosticVoucher,
-    hir_def::{Trait, TypeAlias as HirTypeAlias},
+    hir_def::{ImplTrait, Trait, TypeAlias as HirTypeAlias},
     span::{DynLazySpan, LazySpan},
     HirDb,
 };
@@ -236,8 +236,8 @@ pub enum TraitLowerDiag {
     ExternalTraitForExternalType(DynLazySpan),
 
     ConflictTraitImpl {
-        primary: DynLazySpan,
-        conflict_with: DynLazySpan,
+        primary: ImplTrait,
+        conflict_with: ImplTrait,
     },
 
     KindMismatch {
@@ -253,6 +253,13 @@ pub enum TraitLowerDiag {
 }
 
 impl TraitLowerDiag {
+    pub(super) fn conflict_impl(primary: ImplTrait, conflict_with: ImplTrait) -> Self {
+        Self::ConflictTraitImpl {
+            primary,
+            conflict_with,
+        }
+    }
+
     fn local_code(&self) -> u16 {
         match self {
             Self::ExternalTraitForExternalType(_) => 0,
@@ -293,12 +300,12 @@ impl TraitLowerDiag {
                 SubDiagnostic::new(
                     LabelStyle::Primary,
                     "conflict trait implementation".to_string(),
-                    primary.resolve(db),
+                    primary.lazy_span().ty().resolve(db),
                 ),
                 SubDiagnostic::new(
                     LabelStyle::Secondary,
                     "conflict with this trait implementation".to_string(),
-                    conflict_with.resolve(db),
+                    conflict_with.lazy_span().ty().resolve(db),
                 ),
             ],
 

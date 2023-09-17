@@ -26,6 +26,19 @@ pub(crate) struct TraitImplTable {
     pub(crate) impls: FxHashMap<TraitDef, Vec<Implementor>>,
 }
 
+impl TraitImplTable {
+    pub(crate) fn insert(&mut self, db: &dyn HirAnalysisDb, implementor: Implementor) {
+        self.impls
+            .entry(implementor.trait_def(db))
+            .or_default()
+            .push(implementor);
+    }
+
+    pub(crate) fn get(&self, trait_def: TraitDef) -> Option<&Vec<Implementor>> {
+        self.impls.get(&trait_def)
+    }
+}
+
 /// Represents an instantiated trait which is implemented to types.
 #[salsa::interned]
 pub(crate) struct TraitInstId {
