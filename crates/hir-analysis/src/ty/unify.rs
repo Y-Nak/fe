@@ -1,6 +1,8 @@
 //! This module contains the unification table for type inference and trait
 //! satisfiability checking.
 
+use std::fmt;
+
 use either::Either;
 use ena::unify::{InPlace, UnifyKey, UnifyValue};
 use num_bigint::BigUint;
@@ -60,6 +62,15 @@ where
 {
     db: &'db dyn HirAnalysisDb,
     table: ena::unify::UnificationTable<U>,
+}
+
+impl<'db, U> fmt::Debug for UnificationTableBase<'db, U>
+where
+    U: ena::unify::UnificationStoreBase + fmt::Debug,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.table.fmt(f)
+    }
 }
 
 impl<'db, U> UnificationTableBase<'db, U>
@@ -375,7 +386,7 @@ where
         match ty.data(self.db) {
             TyData::TyVar(var) => {
                 return match self.probe(var.key) {
-                    Either::Left(ty) => ty,
+                    Either::Left(ty) => ty.fold_with(self),
                     Either::Right(var) => TyId::new(self.db, TyData::TyVar(var)),
                 }
             }
@@ -383,7 +394,7 @@ where
             TyData::ConstTy(const_ty) => {
                 if let ConstTyData::TyVar(var, ty) = const_ty.data(self.db) {
                     return match self.probe(var.key) {
-                        Either::Left(ty) => ty,
+                        Either::Left(ty) => ty.fold_with(self),
                         Either::Right(var) => TyId::const_ty_var(self.db, *ty, var.key),
                     };
                 }

@@ -1,0 +1,26 @@
+struct Nat<P> { prim: P }
+struct Int<P> { prim: P }
+
+trait Neg<Out> {
+    fn neg(self) -> Out
+}
+
+
+impl Neg<i8> for i8 {
+    fn neg(self) -> i8 {
+        -self
+    }
+}
+
+impl<P, Out> Neg<Int<Out>> for Nat<P>
+where P: Neg<Out> {
+    fn neg(self) -> Int<Out> {
+        let x = self.prim.neg()
+        Int {prim: x}
+    }
+}
+
+fn foo() {
+    let x = 42
+    let _ = Nat{ prim: x }.neg()
+}

@@ -283,9 +283,11 @@ impl GeneratorNode {
     ///
     /// This function attempts to find a new solution or sub-goal for the
     /// generator node. It iterates through the candidate implementors and
-    /// assumptions, unifying them with the goal. If a solution is found, it
-    /// is registered. If a sub-goal is found, a new consumer node is
-    /// created to handle it.
+    /// assumptions, unifying them with the goal.
+    /// If the candidate doesn't have further subgoals, the candidate is a
+    /// solution, and hence, it's registered immediately to the set of
+    /// solution of the generator node. Otherwise, i.e., if sub-goals are found,
+    /// a new consumer node is created to solve them.
     ///
     /// # Parameters
     /// - `pf`: A mutable reference to the `ProofForest`.

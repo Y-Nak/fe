@@ -1,0 +1,119 @@
+---
+source: crates/hir-analysis/tests/ty_check.rs
+expression: res
+input_file: crates/hir-analysis/test_files/ty_check/method/nested_constraints.fe
+---
+note: 
+   ┌─ test_file.fe:10:24
+   │  
+10 │       fn neg(self) -> i8 {
+   │ ╭────────────────────────^
+11 │ │         -self
+12 │ │     }
+   │ ╰─────^ i8
+
+note: 
+   ┌─ test_file.fe:11:9
+   │
+11 │         -self
+   │         ^^^^^ i8
+
+note: 
+   ┌─ test_file.fe:11:10
+   │
+11 │         -self
+   │          ^^^^ i8
+
+note: 
+   ┌─ test_file.fe:17:30
+   │  
+17 │       fn neg(self) -> Int<Out> {
+   │ ╭──────────────────────────────^
+18 │ │         let x = self.prim.neg()
+19 │ │         Int {prim: x}
+20 │ │     }
+   │ ╰─────^ Int<Out>
+
+note: 
+   ┌─ test_file.fe:18:13
+   │
+18 │         let x = self.prim.neg()
+   │             ^ Out
+
+note: 
+   ┌─ test_file.fe:18:17
+   │
+18 │         let x = self.prim.neg()
+   │                 ^^^^ Nat<P>
+
+note: 
+   ┌─ test_file.fe:18:17
+   │
+18 │         let x = self.prim.neg()
+   │                 ^^^^^^^^^ P
+
+note: 
+   ┌─ test_file.fe:18:17
+   │
+18 │         let x = self.prim.neg()
+   │                 ^^^^^^^^^^^^^^^ Out
+
+note: 
+   ┌─ test_file.fe:19:9
+   │
+19 │         Int {prim: x}
+   │         ^^^^^^^^^^^^^ Int<Out>
+
+note: 
+   ┌─ test_file.fe:19:20
+   │
+19 │         Int {prim: x}
+   │                    ^ Out
+
+note: 
+   ┌─ test_file.fe:23:10
+   │  
+23 │   fn foo() {
+   │ ╭──────────^
+24 │ │     let x = 42
+25 │ │     let _ = Nat{ prim: x }.neg()
+26 │ │ }
+   │ ╰─^ ()
+
+note: 
+   ┌─ test_file.fe:24:9
+   │
+24 │     let x = 42
+   │         ^ i8
+
+note: 
+   ┌─ test_file.fe:24:13
+   │
+24 │     let x = 42
+   │             ^^ i8
+
+note: 
+   ┌─ test_file.fe:25:9
+   │
+25 │     let _ = Nat{ prim: x }.neg()
+   │         ^ Int<i8>
+
+note: 
+   ┌─ test_file.fe:25:13
+   │
+25 │     let _ = Nat{ prim: x }.neg()
+   │             ^^^^^^^^^^^^^^ Nat<i8>
+
+note: 
+   ┌─ test_file.fe:25:13
+   │
+25 │     let _ = Nat{ prim: x }.neg()
+   │             ^^^^^^^^^^^^^^^^^^^^ Int<i8>
+
+note: 
+   ┌─ test_file.fe:25:24
+   │
+25 │     let _ = Nat{ prim: x }.neg()
+   │                        ^ i8
+
+

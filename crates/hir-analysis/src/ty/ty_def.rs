@@ -721,7 +721,7 @@ impl PartialOrd for TyVarSort {
 impl TyVar {
     pub(super) fn pretty_print(&self) -> String {
         match self.sort {
-            TyVarSort::General => ("_").to_string(),
+            TyVarSort::General => "_".to_string(),
             TyVarSort::Integral => "{integer}".to_string(),
             TyVarSort::String(n) => format!("String<{}>", n).to_string(),
         }
