@@ -57,7 +57,6 @@ where
     /// variables, and uses this map to canonicalize the solution.
     ///
     /// # Parameters
-    /// - `db`: The database reference.
     /// - `table`: The unification table must be from the same environment as
     ///   the solution.
     /// - `solution`: The solution to be canonicalized.
@@ -67,7 +66,6 @@ where
     /// canonicalized to the context of the canonical query.
     pub(super) fn canonicalize_solution<S, U>(
         &self,
-        db: &dyn HirAnalysisDb,
         table: &mut UnificationTableBase<S>,
         solution: U,
     ) -> Solution<U>
@@ -76,8 +74,9 @@ where
         S: UnificationStore,
         U: for<'db> TyFoldable<'db> + Clone,
     {
-        let solution = solution.fold_with(table);
+        let db = table.db();
 
+        let solution = solution.fold_with(table);
         // Make the substitution so that it maps back from probed type variable to
         // canonical type variables.
         // `Probed type variable -> Canonical type variable`.

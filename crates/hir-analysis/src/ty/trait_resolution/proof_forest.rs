@@ -271,7 +271,7 @@ impl GeneratorNode {
         let g_node = &mut pf.g_nodes[self];
         let solution = g_node
             .goal
-            .canonicalize_solution(table.db(), table, g_node.extracted_goal);
+            .canonicalize_solution(table, g_node.extracted_goal);
         if g_node.solutions.insert(solution) {
             for &c_node in g_node.dependents.iter() {
                 pf.c_stack.push((c_node, solution));
@@ -430,11 +430,9 @@ impl ConsumerNode {
         let c_node = &mut pf.c_nodes[self];
         if c_node.children.len() != 1 {
             let unsat = c_node.query.0;
-            let unsat = pf.g_nodes[c_node.root].goal.canonicalize_solution(
-                c_node.table.db(),
-                &mut c_node.table,
-                unsat,
-            );
+            let unsat = pf.g_nodes[c_node.root]
+                .goal
+                .canonicalize_solution(&mut c_node.table, unsat);
             return Some(unsat);
         }
 
