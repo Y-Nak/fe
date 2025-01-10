@@ -8,15 +8,14 @@ use common::{
 };
 use hir::{hir_def::TopLevelMod, lower::map_file_to_mod, LowerHirDb};
 use patricia_tree::StringPatriciaMap;
+// use rust_embed::RustEmbed;
 use tracing::info;
 
 use super::db::LanguageServerDatabase;
 
-use rust_embed::RustEmbed;
-
-#[derive(RustEmbed)]
-#[folder = "../library/std"]
-struct StdLib;
+// #[derive(RustEmbed)]
+// #[folder = "../library/std"]
+// struct StdLib;
 
 const FE_CONFIG_SUFFIX: &str = "fe.toml";
 
@@ -56,6 +55,10 @@ pub struct LocalIngotContext {
     pub files: StringPatriciaMap<InputFile>,
 }
 
+// TODO: This causes a bug. A problem is that the root file is assumed under
+// `src` directory, but this doesn't check if the file is under the `src`.
+// This means the file can be a "parent" of the root file of the
+// ingot, this breaks an invariant of the ingot structure.
 fn ingot_contains_file(ingot_path: &str, file_path: &str) -> bool {
     let ingot_path = ingot_path
         .strip_suffix(&FE_CONFIG_SUFFIX)
@@ -297,21 +300,21 @@ impl Workspace {
         info!("Loading std lib...");
 
         // Collect paths to avoid borrowing `db` mutably during the closure
-        let paths: Vec<_> = StdLib::iter().collect();
+        // let paths: Vec<_> = StdLib::iter().collect();
 
-        for path in paths {
-            let path_str = path.as_ref();
-            let std_path = format!("{}/std/{}", root_path_str, path_str);
-            info!("adding std file... {:?} --- {:?}", std_path, path_str);
-            if let Some(file) = StdLib::get(path_str) {
-                let contents = String::from_utf8(file.data.as_ref().to_vec());
-                if let Ok(contents) = contents {
-                    if let Some(input) = self.touch_input_for_file_path(db, &std_path) {
-                        input.set_text(db).to(contents);
-                    }
-                }
-            }
-        }
+        // for path in paths {
+        //     let path_str = path.as_ref();
+        //     let std_path = format!("{}/std/{}", root_path_str, path_str);
+        //     info!("adding std file... {:?} --- {:?}", std_path, path_str);
+        //     if let Some(file) = StdLib::get(path_str) {
+        //         let contents = String::from_utf8(file.data.as_ref().to_vec());
+        //         if let Ok(contents) = contents {
+        //             if let Some(input) = self.touch_input_for_file_path(db,
+        // &std_path) {                 input.set_text(db).to(contents);
+        //             }
+        //         }
+        //     }
+        // }
         Ok(())
     }
 
@@ -537,12 +540,12 @@ impl SyncableIngotFileContext for Workspace {
 
 #[cfg(test)]
 mod tests {
-    use crate::backend::workspace::{
-        get_containing_ingot_mut, IngotFileContext, Workspace, FE_CONFIG_SUFFIX,
-    };
     use std::path::PathBuf;
 
     use super::StandaloneIngotContext;
+    use crate::backend::workspace::{
+        get_containing_ingot_mut, IngotFileContext, Workspace, FE_CONFIG_SUFFIX,
+    };
 
     #[test]
     fn test_standalone_context() {
@@ -754,7 +757,8 @@ mod tests {
             common::input::IngotKind::StandAlone
         );
 
-        // TODO: make it easier to go both ways between an ingot root path and its config path
+        // TODO: make it easier to go both ways between an ingot root path and its
+        // config path
         let ingot_paths = workspace
             .ingot_contexts
             .values()

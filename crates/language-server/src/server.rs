@@ -1,25 +1,32 @@
-use crate::fallback::WithFallbackService;
-use crate::functionality::handlers::{FileChange, FilesNeedDiagnostics, NeedsDiagnostics};
-use crate::logging;
-use crate::lsp_actor::service::LspActorService;
-use crate::lsp_actor::LspActor;
-use crate::lsp_streams::RouterStreams;
 use act_locally::builder::ActorBuilder;
-use async_lsp::lsp_types::notification::{
-    self, DidChangeTextDocument, DidChangeWatchedFiles, DidOpenTextDocument, Initialized,
+use async_lsp::{
+    lsp_types::{
+        notification::{
+            self, DidChangeTextDocument, DidChangeWatchedFiles, DidDeleteFiles,
+            DidOpenTextDocument, DidRenameFiles, Initialized,
+        },
+        request::{GotoDefinition, HoverRequest, Initialize},
+    },
+    router::Router,
+    ClientSocket,
 };
-use async_lsp::lsp_types::request::{GotoDefinition, HoverRequest};
-use async_lsp::ClientSocket;
 use async_std::stream::StreamExt;
 use futures_batch::ChunksTimeoutStreamExt;
 // use serde_json::Value;
 use tracing::instrument::WithSubscriber;
 use tracing::{info, warn};
 
-use crate::backend::Backend;
-use crate::functionality::{goto, handlers};
-use async_lsp::lsp_types::request::Initialize;
-use async_lsp::router::Router;
+use crate::{
+    backend::Backend,
+    fallback::WithFallbackService,
+    functionality::{
+        goto, handlers,
+        handlers::{FileChange, FilesNeedDiagnostics, NeedsDiagnostics},
+    },
+    logging,
+    lsp_actor::{service::LspActorService, LspActor},
+    lsp_streams::RouterStreams,
+};
 
 pub(crate) fn setup(
     client: ClientSocket,
@@ -40,13 +47,15 @@ pub(crate) fn setup(
     lsp_actor_service
         // mutating handlers
         .handle_request_mut::<Initialize>(handlers::initialize)
-        .handle_request_mut::<GotoDefinition>(goto::handle_goto_definition)
         .handle_event_mut::<FileChange>(handlers::handle_file_change)
         .handle_event::<FilesNeedDiagnostics>(handlers::handle_files_need_diagnostics)
         // non-mutating handlers
         .handle_notification::<Initialized>(handlers::initialized)
         .handle_request::<HoverRequest>(handlers::handle_hover_request)
+        .handle_request::<GotoDefinition>(goto::handle_goto_definition)
         .handle_notification::<DidOpenTextDocument>(handlers::handle_did_open_text_document)
+        .handle_notification::<DidDeleteFiles>(handlers::handle_did_delete_files)
+        .handle_notification::<DidRenameFiles>(handlers::handle_did_rename_files)
         .handle_notification::<DidChangeTextDocument>(handlers::handle_did_change_text_document)
         .handle_notification::<DidChangeWatchedFiles>(handlers::handle_did_change_watched_files)
         .handle_notification::<notification::Exit>(handlers::handle_exit);

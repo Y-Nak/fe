@@ -1,23 +1,18 @@
-use crate::backend::Backend;
-
-use async_lsp::lsp_types::FileChangeType;
 use async_lsp::{
     lsp_types::{
-        Hover, HoverParams, InitializeParams, InitializeResult, InitializedParams, LogMessageParams,
+        FileChangeType, Hover, HoverParams, InitializeParams, InitializeResult, InitializedParams,
+        LogMessageParams,
     },
     LanguageClient, ResponseError,
 };
 use common::InputDb;
 use fxhash::FxHashSet;
 use salsa::ParallelDatabase;
-use tracing::dispatcher::with_default;
-use tracing::Dispatch;
+use tracing::{dispatcher::with_default, error, info, Dispatch};
+use url::Url;
 
 use super::{capabilities::server_capabilities, hover::hover_helper};
-
-use crate::backend::workspace::IngotFileContext;
-
-use tracing::{error, info};
+use crate::backend::{workspace::IngotFileContext, Backend};
 
 #[derive(Debug)]
 pub struct FilesNeedDiagnostics(pub Vec<NeedsDiagnostics>);
@@ -153,6 +148,37 @@ pub async fn handle_did_change_text_document(
         uri: message.text_document.uri,
         kind: ChangeKind::Edit(Some(message.content_changes[0].text.clone())),
     });
+    Ok(())
+}
+
+pub async fn handle_did_delete_files(
+    backend: &Backend,
+    message: async_lsp::lsp_types::DeleteFilesParams,
+) -> Result<(), ResponseError> {
+    for file in message.files {
+        let _ = backend.client.clone().emit(FileChange {
+            uri: Url::parse(&file.uri).unwrap(),
+            kind: ChangeKind::Delete,
+        });
+    }
+    Ok(())
+}
+
+pub async fn handle_did_rename_files(
+    backend: &Backend,
+    message: async_lsp::lsp_types::RenameFilesParams,
+) -> Result<(), ResponseError> {
+    for file in message.files {
+        let client = backend.client.clone();
+        let _ = client.emit(FileChange {
+            uri: Url::parse(&file.old_uri).unwrap(),
+            kind: ChangeKind::Delete,
+        });
+        let _ = client.emit(FileChange {
+            uri: Url::parse(&file.new_uri).unwrap(),
+            kind: ChangeKind::Create,
+        });
+    }
     Ok(())
 }
 

@@ -1,8 +1,9 @@
 use async_lsp::ResponseError;
+use common::diagnostics::Span;
 use fxhash::FxHashMap;
 use hir::{
     hir_def::{scope_graph::ScopeId, IdentId, ItemKind, Partial, PathId, TopLevelMod},
-    span::DynLazySpan,
+    span::{DynLazySpan, LazySpan},
     visitor::{prelude::LazyPathSpan, Visitor, VisitorCtxt},
     LowerHirDb, SpannedHirDb,
 };
@@ -12,8 +13,6 @@ use crate::{
     backend::{db::LanguageServerDb, Backend},
     util::{to_lsp_location_from_scope, to_offset_from_position},
 };
-use common::diagnostics::Span;
-use hir::span::LazySpan;
 
 pub type Cursor = rowan::TextSize;
 
@@ -137,7 +136,8 @@ pub fn get_goto_target_scopes_for_cursor<'db>(
 
     let segments = cursor_segment.segments(db);
     let is_intermediate_segment = cursor_segment.is_intermediate(db);
-    // let is_partial = cursor_segment.idx < cursor_segment.path.segments(db.as_jar_db()).len();
+    // let is_partial = cursor_segment.idx <
+    // cursor_segment.path.segments(db.as_jar_db()).len();
     let resolved_segments = hir_analysis::name_resolution::resolve_segments_early(
         db.as_hir_analysis_db(),
         segments,
@@ -168,7 +168,7 @@ use crate::backend::workspace::IngotFileContext;
 
 // impl Backend {
 pub async fn handle_goto_definition(
-    backend: &mut Backend,
+    backend: &Backend,
     params: async_lsp::lsp_types::GotoDefinitionParams,
 ) -> Result<Option<async_lsp::lsp_types::GotoDefinitionResponse>, ResponseError> {
     // Convert the position to an offset in the file
@@ -210,17 +210,18 @@ pub async fn handle_goto_definition(
 // }
 #[cfg(test)]
 mod tests {
-    use crate::backend::{
-        db::LanguageServerDatabase,
-        workspace::{IngotFileContext, Workspace},
-    };
+    use std::{collections::BTreeMap, path::Path};
 
-    use super::*;
     use common::input::IngotKind;
     use dir_test::{dir_test, Fixture};
     use fe_compiler_test_utils::snap_test;
     use hir::{HirDb, LowerHirDb};
-    use std::{collections::BTreeMap, path::Path};
+
+    use super::*;
+    use crate::backend::{
+        db::LanguageServerDatabase,
+        workspace::{IngotFileContext, Workspace},
+    };
 
     // given a cursor position and a string, convert to cursor line and column
     fn line_col_from_cursor(cursor: Cursor, s: &str) -> (usize, usize) {
