@@ -76,7 +76,5 @@ error[8-0011]: all fields are not given
 22 │     let Bar::Variant {}
    │                      ^^
    │                      │
-   │                      missing `x, y`
+   │                      missing `y, x`
    │                      Consider using `Bar::Variant { x, y }` instead
-
-
